@@ -21,4 +21,9 @@ subtest 'Fetch root dir' => sub {
     is_deeply $json, {}, '. . . and it returns the right JSON';
 };
 
+subtest 'Check login' => sub {
+    my $res = $sut->request(GET '/ping');
+    is $res->code, 403, 'The /ping path never returns a 401, to avoid the browser auth dialog';
+};
+
 done_testing();
