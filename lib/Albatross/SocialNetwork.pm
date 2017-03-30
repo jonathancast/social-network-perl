@@ -34,13 +34,13 @@ post '/login' => sub {
     my $login_id = params->{login_id};
     unless ($login_id) {
         status 'forbidden';
-        return { errors => [ { code => 'badparams', msg => 'You must supply a login_id', }, ], };
+        return { errors => [ { code => 'badparams', missing => [ 'login_id', ], msg => 'You must supply a login_id', }, ], };
     }
 
     my $password = params->{password};
     unless ($password) {
         status 'forbidden';
-        return { errors => [ { code => 'badparams', msg => 'You must supply a password', }, ], };
+        return { errors => [ { code => 'badparams', missing => [ 'password', ], msg => 'You must supply a password', }, ], };
     }
 
     ...

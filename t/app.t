@@ -38,7 +38,7 @@ subtest 'Successful login' => sub {
         is $res->code, 403, 'Trying to login without a login_id fails';
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
-        is_deeply $json->{errors}, [ { code => 'badparams', msg => 'You must supply a login_id', } ], '. . . and it returns the right errors';
+        is_deeply $json->{errors}, [ { code => 'badparams', missing => [ 'login_id', ], msg => 'You must supply a login_id', } ], '. . . and it returns the right errors';
     };
 
     subtest 'No password' => sub {
@@ -48,7 +48,7 @@ subtest 'Successful login' => sub {
         is $res->code, 403, 'Trying to login without a password fails';
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
-        is_deeply $json->{errors}, [ { code => 'badparams', msg => 'You must supply a password', } ], '. . . and it returns the right errors';
+        is_deeply $json->{errors}, [ { code => 'badparams', missing => [ 'password', ], msg => 'You must supply a password', } ], '. . . and it returns the right errors';
     };
 };
 
