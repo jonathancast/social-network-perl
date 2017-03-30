@@ -7,6 +7,8 @@ use Dancer2;
 
 use Try::Tiny;
 
+set serializer => 'JSON';
+
 any '/**' => sub {
     pass if request->path eq '/';
 
@@ -16,7 +18,7 @@ any '/**' => sub {
         } else {
             status 'unauthorized';
         }
-        return encode_json {
+        return {
             errors => [ { code => 'forbidden', msg => 'You need to log in to access this page', }, ],
         };
     }
@@ -25,7 +27,17 @@ any '/**' => sub {
 };
 
 get '/' => sub {
-    return encode_json {};
+    return {};
+};
+
+post '/login' => sub {
+    my $login_id = params->{login_id};
+    unless ($login_id) {
+        status 'forbidden';
+        return { errors => [ { code => 'badparams', msg => 'You must supply a login_id', }, ], };
+    }
+
+    ...
 };
 
 1;
