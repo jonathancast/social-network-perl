@@ -9,6 +9,10 @@ use HTTP::Request::Common;
 
 use JSON::MaybeXS qw/ decode_json encode_json /;
 
+use lib 't/lib';
+
+use T::TestDB;
+
 use Albatross::SocialNetwork;
 
 my $sut = Plack::Test->create(Albatross::SocialNetwork->to_app);
@@ -29,6 +33,7 @@ subtest 'Check login' => sub {
 subtest 'Successful login' => sub {
     my $params = {
         login_id => 'fred',
+        password => 'xxxx1234',
     };
 
     subtest 'No login id' => sub {
@@ -49,6 +54,26 @@ subtest 'Successful login' => sub {
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
         is_deeply $json->{errors}, [ { code => 'badparams', missing => [ 'password', ], msg => 'You must supply a password', } ], '. . . and it returns the right errors';
+    };
+
+    subtest 'Invalid user' => sub {
+        local $params->{login_id} = 'george';
+
+        my $res = $sut->request(POST '/login', ContentType => 'application/json', Content => encode_json($params));
+        is $res->code, 403, 'Trying to login with the wrong user fails';
+        my $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json->{errors}, [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', } ], '. . . and it returns the right errors';
+    };
+
+    subtest 'Invalid password' => sub {
+        local $params->{password} = 'yyyy1234';
+
+        my $res = $sut->request(POST '/login', ContentType => 'application/json', Content => encode_json($params));
+        is $res->code, 403, 'Trying to login with the wrong password fails';
+        my $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json->{errors}, [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', } ], '. . . and it returns the right errors';
     };
 };
 

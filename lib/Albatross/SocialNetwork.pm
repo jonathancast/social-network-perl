@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Dancer2;
+use Dancer2::Plugin::DBIC;
 
 use Try::Tiny;
 
@@ -43,7 +44,13 @@ post '/login' => sub {
         return { errors => [ { code => 'badparams', missing => [ 'password', ], msg => 'You must supply a password', }, ], };
     }
 
-    ...
+    my $user = schema->resultset('User')->find({ login_id => $login_id, });
+    unless ($user) {
+        status 'forbidden';
+        return { errors => [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', }, ], };
+    }
+
+    return {};
 };
 
 1;

@@ -1,0 +1,4 @@
+plugins:
+    DBIC:
+        default:
+            dsn: dbi:SQLite:dbname=t/db/test.db
