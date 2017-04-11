@@ -25,6 +25,7 @@ class Albatross::SocialNetwork::Schema::Result::User extends DBIx::Class::Encode
     }
 
     has_many friends => 'Albatross::SocialNetwork::Schema::Result::UserFriend' => 'user';
+    has_many admirers => 'Albatross::SocialNetwork::Schema::Result::UserFriend' => 'friend';
 }
 
 1;

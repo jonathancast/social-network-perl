@@ -41,7 +41,13 @@ my $barney = schema->resultset('User')->create({
     %$barney_login,
 });
 
+my $blazey = schema->resultset('User')->create({
+    login_id => 'blazey',
+    password => 'xxxx9012',
+});
+
 $fred->add_to_friends({ friend => $barney->id, });
+$blazey->add_to_friends({ friend => $fred->id, });
 
 subtest 'Fetch root dir' => sub {
     my $res = $sut->request(GET "/");
@@ -175,6 +181,12 @@ subtest 'friends' => sub {
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
         is_deeply $json, { friend_requests => [ { login_id => 'barney', }, ], }, '. . . and it returns the right values' or diag explain $json;
+
+        $res = $do_request->(GET '/friend/incoming');
+        ok $res->is_success, 'You can get your list of incoming friend requests';
+        $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json, { friend_requests => [ { login_id => 'blazey', }, ], }, '. . . and it returns the right values' or diag explain $json;
     });
 };
 

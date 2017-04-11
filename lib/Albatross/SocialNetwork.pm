@@ -71,4 +71,10 @@ get '/friend/outgoing' => sub {
     return { friend_requests => [ map { $_->as_hash(qw/ login_id /) } @friends ], };
 };
 
+get '/friend/incoming' => sub {
+    my @friends = session('user')->admirers->search_related('user')->all();
+
+    return { friend_requests => [ map { $_->as_hash(qw/ login_id /) } @friends ], };
+};
+
 1;
