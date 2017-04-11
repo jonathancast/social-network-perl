@@ -23,6 +23,8 @@ class Albatross::SocialNetwork::Schema::Result::User extends DBIx::Class::Encode
     method as_hash(@cols) {
         return { map { $_ => $self->$_ } @cols };
     }
+
+    has_many friends => 'Albatross::SocialNetwork::Schema::Result::UserFriend' => 'user';
 }
 
 1;

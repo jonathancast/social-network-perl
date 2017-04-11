@@ -65,4 +65,10 @@ get '/ping' => sub {
     return {};
 };
 
+get '/friend/outgoing' => sub {
+    my @friends = session('user')->friends->search_related('friend')->all();
+
+    return { friend_requests => [ map { $_->as_hash(qw/ login_id /) } @friends ], };
+};
+
 1;

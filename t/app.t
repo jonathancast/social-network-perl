@@ -28,9 +28,20 @@ my $fred_login = {
     password => 'xxxx1234',
 };
 
-schema->resultset('User')->create({
+my $barney_login = {
+    login_id => 'barney',
+    password => 'xxxx5678',
+};
+
+my $fred = schema->resultset('User')->create({
     %$fred_login,
 });
+
+my $barney = schema->resultset('User')->create({
+    %$barney_login,
+});
+
+$fred->add_to_friends({ friend => $barney->id, });
 
 subtest 'Fetch root dir' => sub {
     my $res = $sut->request(GET "/");
@@ -157,10 +168,13 @@ sub setup_login($params, $k) {
     return $res;
 }
 
-subtest 'foo' => sub {
+subtest 'friends' => sub {
     setup_login($fred_login, sub ($do_request) {
-        my $res = $do_request->(GET '/ping');
-        is $res->code, 200, 'ok';
+        my $res = $do_request->(GET '/friend/outgoing');
+        ok $res->is_success, 'You can get your list of outgoing friend requests';
+        my $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json, { friend_requests => [ { login_id => 'barney', }, ], }, '. . . and it returns the right values' or diag explain $json;
     });
 };
 
