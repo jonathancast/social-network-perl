@@ -50,7 +50,13 @@ post '/login' => sub {
         return { errors => [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', }, ], };
     }
 
+    session user => $user;
+
     return $user->as_hash(qw/ login_id /);
+};
+
+get '/ping' => sub {
+    return {};
 };
 
 1;

@@ -1,10 +1,12 @@
 use strict;
+use warnings;
 
 use Test::More;
 use Plack::Test;
 
 use Try::Tiny;
 
+use HTTP::Cookies;
 use HTTP::Request::Common;
 
 use JSON::MaybeXS qw/ decode_json encode_json /;
@@ -14,6 +16,8 @@ use lib 't/lib';
 use T::TestDB;
 
 use Albatross::SocialNetwork;
+
+my $host = 'https://albatross.localdomain:8080';
 
 my $sut = Plack::Test->create(Albatross::SocialNetwork->to_app);
 
@@ -82,11 +86,23 @@ subtest 'Login' => sub {
     };
 
     subtest 'Valid login' => sub {
-        my $res = $sut->request(POST '/login', ContentType => 'application/json', Content => encode_json($params));
+        my $jar = HTTP::Cookies->new();
+
+        my $res = $sut->request(POST "$host/login", ContentType => 'application/json', Content => encode_json($params));
         is $res->code, 200, 'Trying to login with valid info succeeds';
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
-        is_deeply $json, { login_id => 'fred', }, '. . . and it returns the right value' or diag explain $json
+        is_deeply $json, { login_id => 'fred', }, '. . . and it returns the right value' or diag explain $json;
+
+        $jar->extract_cookies($res);
+
+        my $req = GET "$host/ping";
+        $jar->add_cookie_header($req);
+        $res = $sut->request($req);
+        is $res->code, 200, 'Checking for a valid session after logging in succeeds';
+        $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json, {}, '. . . and it returns the right value' or diag explain $json;
     };
 };
 
