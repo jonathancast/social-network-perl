@@ -17,6 +17,11 @@ use Albatross::SocialNetwork;
 
 my $sut = Plack::Test->create(Albatross::SocialNetwork->to_app);
 
+schema->resultset('User')->create({
+    login_id => 'fred',
+    password => 'xxxx1234',
+});
+
 subtest 'Fetch root dir' => sub {
     my $res = $sut->request(GET "/");
     ok $res->is_success, 'Fetching / succeeds';
@@ -30,7 +35,7 @@ subtest 'Check login' => sub {
     is $res->code, 403, 'The /ping path never returns a 401, to avoid the browser auth dialog';
 };
 
-subtest 'Successful login' => sub {
+subtest 'Login' => sub {
     my $params = {
         login_id => 'fred',
         password => 'xxxx1234',
@@ -74,6 +79,14 @@ subtest 'Successful login' => sub {
         my $json = try { decode_json($res->decoded_content) };
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
         is_deeply $json->{errors}, [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', } ], '. . . and it returns the right errors';
+    };
+
+    subtest 'Valid login' => sub {
+        my $res = $sut->request(POST '/login', ContentType => 'application/json', Content => encode_json($params));
+        is $res->code, 200, 'Trying to login with valid info succeeds';
+        my $json = try { decode_json($res->decoded_content) };
+        isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+        is_deeply $json, { login_id => 'fred', }, '. . . and it returns the right value' or diag explain $json
     };
 };
 

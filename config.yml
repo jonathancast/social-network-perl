@@ -1,0 +1,4 @@
+plugins:
+    DBIC:
+        default:
+            schema_class: Albatross::SocialNetwork::Schema

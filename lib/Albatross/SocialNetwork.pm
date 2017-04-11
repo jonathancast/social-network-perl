@@ -45,12 +45,12 @@ post '/login' => sub {
     }
 
     my $user = schema->resultset('User')->find({ login_id => $login_id, });
-    unless ($user) {
+    unless ($user && $user->check_password($password)) {
         status 'forbidden';
         return { errors => [ { code => 'badlogin', msg => 'The username or password you supplied is incorrect', }, ], };
     }
 
-    return {};
+    return $user->as_hash(qw/ login_id /);
 };
 
 1;
