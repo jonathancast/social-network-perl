@@ -55,6 +55,12 @@ post '/login' => sub {
     return $user->as_hash(qw/ login_id /);
 };
 
+post '/logout' => sub {
+    app->destroy_session();
+
+    return {};
+};
+
 get '/ping' => sub {
     return {};
 };

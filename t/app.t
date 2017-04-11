@@ -21,9 +21,13 @@ my $host = 'https://albatross.localdomain:8080';
 
 my $sut = Plack::Test->create(Albatross::SocialNetwork->to_app);
 
-schema->resultset('User')->create({
+my $fred_login = {
     login_id => 'fred',
     password => 'xxxx1234',
+};
+
+schema->resultset('User')->create({
+    %$fred_login,
 });
 
 subtest 'Fetch root dir' => sub {
@@ -40,10 +44,7 @@ subtest 'Check login' => sub {
 };
 
 subtest 'Login' => sub {
-    my $params = {
-        login_id => 'fred',
-        password => 'xxxx1234',
-    };
+    my $params = $fred_login;
 
     subtest 'No login id' => sub {
         delete local $params->{login_id};
@@ -104,6 +105,32 @@ subtest 'Login' => sub {
         isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
         is_deeply $json, {}, '. . . and it returns the right value' or diag explain $json;
     };
+};
+
+subtest 'logout' => sub {
+    my $jar = HTTP::Cookies->new();
+
+    my $res = $sut->request(POST "$host/login", ContentType => 'application/json', Content => encode_json($fred_login));
+    is $res->code, 200, 'Trying to login with valid info succeeds';
+    $jar->extract_cookies($res);
+
+    my $req = GET "$host/ping";
+    $jar->add_cookie_header($req);
+    $res = $sut->request($req);
+    is $res->code, 200, 'Checking for a valid session after logging in succeeds';
+
+    $req = POST "$host/logout";
+    $jar->add_cookie_header($req);
+    $res = $sut->request($req);
+    is $res->code, 200, 'You can logout if you have logged in successfully';
+    my $json = try { decode_json($res->decoded_content) };
+    isnt $json, undef, '. . . and it returns JSON' or diag $res->decoded_content;
+    is_deeply $json, {}, '. . . and it returns the right value' or diag explain $json;
+
+    $req = GET "$host/ping";
+    $jar->add_cookie_header($req);
+    $res = $sut->request($req);
+    is $res->code, 403, 'Checking the session after logging out fails';
 };
 
 done_testing();
