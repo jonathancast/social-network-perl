@@ -1,5 +1,7 @@
-use strict;
+use v5.20;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 use Test::More;
 use Plack::Test;
@@ -131,6 +133,35 @@ subtest 'logout' => sub {
     $jar->add_cookie_header($req);
     $res = $sut->request($req);
     is $res->code, 403, 'Checking the session after logging out fails';
+};
+
+sub setup_login($params, $k) {
+    my $jar = HTTP::Cookies->new();
+
+    my $do_request = sub ($req, @args) {
+        $req->uri($host.$req->uri);
+        $jar->add_cookie_header($req);
+        return $sut->request($req, @args);
+    };
+
+    my $res = $do_request->(POST '/login', ContentType => 'application/json', Content => encode_json($params));
+
+    ok $res->is_success, 'Login was successful' or return 0;
+
+    $jar->extract_cookies($res);
+
+    try { $res = $k->($do_request); }
+    catch { die $_ }
+    finally { $do_request->(POST '/logout') };
+
+    return $res;
+}
+
+subtest 'foo' => sub {
+    setup_login($fred_login, sub ($do_request) {
+        my $res = $do_request->(GET '/ping');
+        is $res->code, 200, 'ok';
+    });
 };
 
 done_testing();
