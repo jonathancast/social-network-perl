@@ -7,3 +7,4 @@ cpanm JSON::MaybeXS
 cpanm Moops
 cpanm Plack::Test
 cpanm DBIx::Class::EncodedColumn
+cpanm Plack::Middleware::DirIndex
